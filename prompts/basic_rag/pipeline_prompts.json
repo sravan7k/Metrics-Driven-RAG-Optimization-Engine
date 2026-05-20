@@ -1,0 +1,22 @@
+{
+  "description": "LlamaIndex query engine prompt templates used in the basic_rag pipeline.",
+  "source": "extracted via index.as_query_engine().get_prompts()",
+  "templates": {
+    "response_synthesizer:text_qa_template": {
+      "description": "Default prompt for answering a query given retrieved context chunks (non-chat mode).",
+      "template": "Context information is below.\n---------------------\n{context_str}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: {query_str}\nAnswer: "
+    },
+    "response_synthesizer:refine_template": {
+      "description": "Used when multiple context chunks are retrieved and the answer from the first chunk is refined with subsequent chunks.",
+      "template": "The original query is as follows: {query_str}\nWe have provided an existing answer: {existing_answer}\nWe have the opportunity to refine the existing answer (only if needed) with some more context below.\n------------\n{context_msg}\n------------\nGiven the new context, refine the original answer to better answer the query. If the context isn't useful, return the original answer.\nRefined Answer: "
+    },
+    "response_synthesizer:chat_content_qa_template": {
+      "description": "Chat-mode variant of text_qa_template used when the LLM supports chat-style turns.",
+      "template": "{% chat role=\"system\" %}\nYou are an expert Q&A system that is trusted around the world.\nAlways answer the query using the provided context information, and not prior knowledge.\nSome rules to follow:\n1. Never directly reference the given context in your answer.\n2. Avoid statements like 'Based on the context, ...' or 'The context information ...' or anything along those lines.\n{% endchat %}\n\n{% chat role=\"user\" %}\nContext information is below.\n---------------------\n{% for message in context_messages %}\n{% for block in message.blocks %}\n{% if block.block_type == 'text' %}\n{{ block.text }}\n{% elif block.block_type == 'image' %}\n{{ block.inline_url() | image }}\n{% elif block.block_type == 'audio' %}\n{{ block.inline_url() | audio }}\n{% elif block.block_type == 'video' %}\n{{ block.inline_url() | video }}\n{% endif %}\n\n{% endfor %}\n{% endfor %}\n---------------------\nGiven the context information and not prior knowledge, answer the query.\nQuery: {{ query_str }}\nAnswer:\n{% endchat %}"
+    },
+    "response_synthesizer:chat_content_refine_template": {
+      "description": "Chat-mode variant of refine_template.",
+      "template": "{% chat role=\"system\" %}\nYou are an expert Q&A system that strictly operates in two modes when refining existing answers:\n1. **Rewrite** an original answer using the new context.\n2. **Repeat** the original answer if the new context isn't useful.\nNever reference the original answer or context directly in your answer.\nWhen in doubt, just repeat the original answer.\n{% endchat %}\n{% chat role=\"user\" %}\nNew Context:\n---------------------\n{% for message in context_messages %}\n{% for block in message.blocks %}\n{% if block.block_type == 'text' %}\n{{ block.text }}\n{% elif block.block_type == 'image' %}\n{{ block.inline_url() | image }}\n{% elif block.block_type == 'audio' %}\n{{ block.inline_url() | audio }}\n{% elif block.block_type == 'video' %}\n{{ block.inline_url() | video }}\n{% endif %}\n\n{% endfor %}\n{% endfor %}\n---------------------\nQuery: {{ query_str }}\nOriginal Answer: {{ existing_answer }}\nNew Answer:\n{% endchat %}"
+    }
+  }
+}

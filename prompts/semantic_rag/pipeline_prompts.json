@@ -1,0 +1,21 @@
+{
+  "description": "LangChain prompt templates used in the semantic_rag pipeline.",
+  "source": "extracted from semantic_rag_eval.py \u2014 ChatPromptTemplate passed to the LCEL chain",
+  "chunker": {
+    "description": "SemanticChunker does not use an LLM prompt. It computes cosine-similarity distances between sentence embeddings and splits at distances above the breakpoint threshold. No prompt template applies.",
+    "model": "OpenAIEmbeddings(model='text-embedding-3-small')",
+    "breakpoint_threshold_type": "percentile",
+    "breakpoint_threshold_amount": 90
+  },
+  "templates": {
+    "rag_qa_template": {
+      "description": "Main prompt for answering a question given semantically-retrieved context chunks (chat mode via ChatAnthropic).",
+      "template": "You are a helpful assistant. Use the following context to answer the question.\n\nContext:\n{context}\n\nQuestion: {question}\n\nAnswer concisely and accurately based only on the provided context.",
+      "input_variables": [
+        "context",
+        "question"
+      ],
+      "notes": "context is formed by joining each retrieved Document's page_content with '\\n\\n---\\n\\n'. question is passed through RunnablePassthrough."
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-05-19T09:46:37.069200+00:00",
+  "config": {
+    "iteration": "basic_rag",
+    "chunk_size": 500,
+    "chunk_overlap": 50,
+    "top_k": 3,
+    "eval_samples": 10,
+    "llm_model": "claude-haiku-4-5-20251001",
+    "embed_model": "BAAI/bge-small-en-v1.5"
+  },
+  "ragas": {
+    "faithfulness": 0.8898,
+    "answer_relevancy": 0.4799,
+    "context_precision": 0.1833
+  },
+  "deepeval": {
+    "Faithfulness": 0.95,
+    "Answer Relevancy": 0.9507,
+    "Contextual Precision": 0.6167
+  },
+  "langsmith": {
+    "correctness": 0.1,
+    "relevance": 0.9
+  },
+  "arize_phoenix": {
+    "faithfulness": 0.9,
+    "correctness": 0.3
+  },
+  "trulens": {
+    "answer_relevance": 0.5667,
+    "context_relevance": 0.8333,
+    "groundedness": 0.9296
+  }
+}
