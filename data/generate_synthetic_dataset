@@ -1,0 +1,99 @@
+import json
+import os
+import uuid
+from typing import List, Literal
+from pydantic import BaseModel, Field
+from openai import OpenAI
+
+# Define the structured schema for your evaluation dataset
+class SyntheticQAPair(BaseModel):
+    question: str = Field(description="A clear, standalone question based ONLY on the provided context.")
+    reference: str = Field(description="A comprehensive, detailed golden answer citing all relevant facts from the context.")
+    question_type: Literal["simple", "reasoning", "multi_context", "conditional", "adverserial"] = Field(
+        description="The reasoning type required to answer the question."
+    )
+
+class SyntheticDataset(BaseModel):
+    pairs: List[SyntheticQAPair]
+
+def generate_synthetic_data(context_chunk: str, num_questions: int = 2) -> List[dict]:
+    client = OpenAI() # Assumes OPENAI_API_KEY is in your environment variables
+    
+    prompt = f"""
+    You are an expert AI evaluation engineer. Your task is to generate high-quality synthetic Question and Answer pairs
+    to test a RAG system. 
+    
+    CRITICAL GUIDELINES:
+    1. The question must be answerable ONLY using the provided text context. Do not use outside knowledge.
+    2. The 'reference' answer must be explicit, factual, and comprehensive (the "golden standard").
+    3. Vary the question types:
+       - 'simple': Direct fact retrieval.
+       - 'reasoning': Requires inferring the cause, effect, or motivation behind an action.
+       - 'multi_context': Connects two distinct ideas mentioned inside the chunk.
+       - 'conditional': Explores what happens under specific criteria or constraints mentioned.
+       - 'adverserial': Intentionally tricky questions that test the model's ability to avoid common pitfalls or misinterpretations.
+    
+    TEXT CONTEXT:
+    \"\"\"
+    {context_chunk}
+    \"\"\"
+    """
+    
+    completion = client.beta.chat.completions.parse(
+        model="gpt-4o-mini", # or "gpt-4o"
+        messages=[
+            {"role": "system", "content": "You are a precise dataset generation assistant."},
+            {"role": "user", "content": prompt}
+        ],
+        response_format=SyntheticDataset,
+    )
+    
+    # Parse out the JSON results
+    result = completion.choices[0].message.parsed
+    return [pair.model_dump() for pair in result.pairs]
+
+# Example Usage:
+if __name__ == "__main__":
+    data_dir = os.path.dirname(__file__)
+
+    # Determine minimum synthetic count so that synthetic = 80% of total dataset
+    golden_path = os.path.join(data_dir, "paul_graham_golden_dataset.json")
+    with open(golden_path) as f:
+        golden_data = json.load(f)
+    golden_count = len(golden_data["queries"])
+    # synthetic / (golden + synthetic) >= 0.8  =>  synthetic >= 4 * golden
+    min_synthetic = golden_count * 4
+    print(f"Golden dataset: {golden_count} pairs. Minimum synthetic required: {min_synthetic}")
+
+    sample_chunk = """
+    In 1995, Robert Morris and I started Viaweb. It was the first software as a service (SaaS) company.
+    We wrote it almost entirely in Lisp, which gave us a massive speed advantage over competitors who
+    were writing code in C++ or Perl. We could deploy features to production while users were actively
+    using the site, without them having to download anything. Yahoo bought us in 1998 for $49 million,
+    and it became Yahoo Store.
+    """
+
+    # Generate in batches of 5 until we reach the minimum required count
+    batch_size = 5
+    all_pairs = []
+    while len(all_pairs) < min_synthetic:
+        remaining = min_synthetic - len(all_pairs)
+        batch = generate_synthetic_data(sample_chunk, num_questions=min(batch_size, remaining))
+        all_pairs.extend(batch)
+        print(f"  Generated {len(all_pairs)}/{min_synthetic} pairs...")
+
+    queries = {}
+    responses = {}
+    for pair in all_pairs:
+        key = str(uuid.uuid4())
+        queries[key] = pair["question"]
+        responses[key] = pair["reference"]
+
+    dataset = {"queries": queries, "responses": responses}
+
+    output_path = os.path.join(data_dir, "synthetic_qa.json")
+    with open(output_path, "w") as f:
+        json.dump(dataset, f, indent=4)
+    print(f"Saved {len(queries)} synthetic QA pairs to {output_path}")
+    print(f"Dataset split — golden: {golden_count} ({golden_count/(golden_count+len(queries)):.0%}), "
+          f"synthetic: {len(queries)} ({len(queries)/(golden_count+len(queries)):.0%})")
