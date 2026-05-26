@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-05-21T00:22:12.032819+00:00",
+  "config": {
+    "iteration": "parent_child_semantic_rag",
+    "chunker": "ParentChildSemanticChunker",
+    "parent_breakpoint_type": "percentile",
+    "parent_breakpoint_amount": 95,
+    "child_breakpoint_type": "percentile",
+    "child_breakpoint_amount": 90,
+    "embed_model": "text-embedding-3-small",
+    "reranker_model": "BAAI/bge-reranker-large",
+    "top_k_retrieve": 25,
+    "top_n_rerank": 3,
+    "eval_samples": 10,
+    "llm_model": "claude-haiku-4-5-20251001"
+  },
+  "ragas": {
+    "faithfulness": 0.9521,
+    "answer_relevancy": 0.8321,
+    "context_precision": 0.7333
+  },
+  "deepeval": {
+    "Faithfulness": 0.98,
+    "Answer Relevancy": 0.9625,
+    "Contextual Precision": 0.8833
+  },
+  "langsmith": {
+    "correctness": 0.9,
+    "relevance": 1.0
+  },
+  "arize_phoenix": {
+    "faithfulness": 1.0,
+    "correctness": 0.8
+  },
+  "trulens": {
+    "answer_relevance": 1.0,
+    "context_relevance": 1.0,
+    "groundedness": 0.8976
+  }
+}

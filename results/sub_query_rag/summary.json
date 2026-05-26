@@ -1,0 +1,42 @@
+{
+  "timestamp": "2026-05-21T09:50:25.366177+00:00",
+  "config": {
+    "iteration": "sub_query_rag",
+    "chunker": "ParentChildSemanticChunker",
+    "query_transformation": "SubQueryExpansion",
+    "sub_query_model": "claude-haiku-4-5-20251001",
+    "parent_breakpoint_type": "percentile",
+    "parent_breakpoint_amount": 95,
+    "child_breakpoint_type": "percentile",
+    "child_breakpoint_amount": 90,
+    "embed_model": "text-embedding-3-small",
+    "reranker_model": "BAAI/bge-reranker-large",
+    "top_k_retrieve_per_query": 15,
+    "top_n_rerank": 4,
+    "eval_samples": 10,
+    "llm_model": "claude-haiku-4-5-20251001"
+  },
+  "ragas": {
+    "faithfulness": 0.9421,
+    "answer_relevancy": 0.8202,
+    "context_precision": 0.75
+  },
+  "deepeval": {
+    "Faithfulness": 1.0,
+    "Answer Relevancy": 0.97,
+    "Contextual Precision": 0.9
+  },
+  "langsmith": {
+    "correctness": 0.9,
+    "relevance": 1.0
+  },
+  "arize_phoenix": {
+    "faithfulness": 1.0,
+    "correctness": 0.5
+  },
+  "trulens": {
+    "answer_relevance": 0.9,
+    "context_relevance": 1.0,
+    "groundedness": 0.8767
+  }
+}

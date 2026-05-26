@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-19T10:08:10.792604+00:00",
+  "timestamp": "2026-05-20T04:27:55.316283+00:00",
   "config": {
     "iteration": "semantic_rag",
     "chunker": "SemanticChunker",
@@ -11,26 +11,26 @@
     "llm_model": "claude-haiku-4-5-20251001"
   },
   "ragas": {
-    "faithfulness": 0.8761,
-    "answer_relevancy": 0.7444,
-    "context_precision": 0.6
+    "faithfulness": 0.9275,
+    "answer_relevancy": 0.7799,
+    "context_precision": 0.7
   },
   "deepeval": {
     "Faithfulness": 1.0,
-    "Answer Relevancy": 0.96,
-    "Contextual Precision": 0.9167
+    "Answer Relevancy": 0.8975,
+    "Contextual Precision": 0.9667
   },
   "langsmith": {
-    "correctness": 0.7,
-    "relevance": 0.9
+    "correctness": 0.9,
+    "relevance": 1.0
   },
   "arize_phoenix": {
-    "faithfulness": 0.8,
-    "correctness": 0.4
+    "faithfulness": 0.9,
+    "correctness": 0.7
   },
   "trulens": {
-    "answer_relevance": 0.9,
+    "answer_relevance": 1.0,
     "context_relevance": 0.9333,
-    "groundedness": 0.9219
+    "groundedness": 0.918
   }
 }

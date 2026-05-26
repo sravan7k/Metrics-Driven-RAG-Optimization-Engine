@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-19T09:46:37.069200+00:00",
+  "timestamp": "2026-05-20T04:07:44.260452+00:00",
   "config": {
     "iteration": "basic_rag",
     "chunk_size": 500,
@@ -10,26 +10,26 @@
     "embed_model": "BAAI/bge-small-en-v1.5"
   },
   "ragas": {
-    "faithfulness": 0.8898,
-    "answer_relevancy": 0.4799,
-    "context_precision": 0.1833
+    "faithfulness": 0.8973,
+    "answer_relevancy": 0.5152,
+    "context_precision": 0.15
   },
   "deepeval": {
-    "Faithfulness": 0.95,
-    "Answer Relevancy": 0.9507,
-    "Contextual Precision": 0.6167
+    "Faithfulness": 0.975,
+    "Answer Relevancy": 0.9281,
+    "Contextual Precision": 0.525
   },
   "langsmith": {
     "correctness": 0.1,
-    "relevance": 0.9
+    "relevance": 0.8
   },
   "arize_phoenix": {
-    "faithfulness": 0.9,
-    "correctness": 0.3
+    "faithfulness": 0.8,
+    "correctness": 0.4
   },
   "trulens": {
-    "answer_relevance": 0.5667,
+    "answer_relevance": 0.6333,
     "context_relevance": 0.8333,
-    "groundedness": 0.9296
+    "groundedness": 0.9318
   }
 }
