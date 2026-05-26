@@ -1,0 +1,81 @@
+{
+  "description": "Prompts and configuration used in the sub_query_rag pipeline.",
+  "source": "extracted from sub_query_rag_eval.py",
+  "sub_query_expansion": {
+    "description": "Pre-retrieval query decomposition layer. Claude Haiku is invoked with a forced tool_choice (Anthropic Tool Use) so the model MUST return structured JSON \u2014 the same guarantee as OpenAI Structured Outputs, implemented via Pydantic validation of the tool_use block. Each user query is expanded into 2\u20133 semantically distinct sub-queries before any vector retrieval begins.",
+    "model": "claude-haiku-4-5-20251001",
+    "system_prompt": "You are an expert query decomposer for a Retrieval-Augmented Generation (RAG) system specialised on the essays of Paul Graham.\n\nYour task: analyse the user query and break it into 2\u20133 distinct, hyper-focused sub-queries that together cover its full information need.\n\nRules\n-----\n1. Comparative queries (e.g. \"Compare Paul Graham's experience at Interleaf vs Viaweb\") MUST be split into one focused sub-query per subject:\n   example output: [\"Paul Graham Interleaf work experience\", \"Paul Graham Viaweb startup experience\"]\n2. Simple or narrow queries: return the original query plus ONE semantically distinct alternative phrasing \u2014 never repeat the same sentence verbatim.\n3. Each sub-query must be self-contained, specific, and optimised for dense vector retrieval (cosine similarity in embedding space).\n4. No two sub-queries may be semantically identical.",
+    "tool": {
+      "name": "generate_sub_queries",
+      "description": "Decompose the user query into 2\u20133 hyper-focused sub-queries optimised for dense vector retrieval against a Paul Graham essay corpus. Each entry must be semantically distinct from the others.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "sub_queries": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of 2\u20133 focused sub-queries derived from the original user query. Comparative queries are split per subject. Simple queries yield the original plus one semantically distinct paraphrase.",
+            "minItems": 2,
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "sub_queries"
+        ]
+      }
+    },
+    "tool_choice": {
+      "type": "tool",
+      "name": "generate_sub_queries"
+    },
+    "output_model": "SubQueryList(sub_queries: list[str])",
+    "sub_query_count": "2\u20133 distinct sub-queries per user query",
+    "backoff": "exponential backoff on 529 Overloaded (shared with all Anthropic calls)"
+  },
+  "chunker": {
+    "description": "Two-layer Parent-Child (Small-to-Large) chunking \u2014 both layers use SemanticChunker. Identical to parent_child_semantic_rag. Parent chunks capture full narrative sections (95th-percentile semantic breaks) and are stored in an in-memory dict. Child chunks are finer semantic sub-segments (90th-percentile breaks) embedded into the vector store with parent_id and child_id metadata.",
+    "parent_splitter": {
+      "type": "SemanticChunker",
+      "embeddings": "OpenAIEmbeddings(model='text-embedding-3-small')",
+      "breakpoint_threshold_type": "percentile",
+      "breakpoint_threshold_amount": 95,
+      "scope": "Applied to full document \u2014 produces coarse, narrative-level sections."
+    },
+    "child_splitter": {
+      "type": "SemanticChunker",
+      "embeddings": "OpenAIEmbeddings(model='text-embedding-3-small')",
+      "breakpoint_threshold_type": "percentile",
+      "breakpoint_threshold_amount": 90,
+      "scope": "Applied to each Parent chunk \u2014 produces fine semantic sub-segments."
+    },
+    "index": "Only child chunks are embedded with OpenAIEmbeddings(model='text-embedding-3-small'). Each child chunk's metadata contains parent_id and child_id."
+  },
+  "retrieval": {
+    "strategy": "Multi-query vector search: original query + each sub-query, top_k=15 each. All child hits are pooled then strictly de-duplicated by child_id metadata to eliminate overlap from semantically overlapping sub-queries.",
+    "top_k_per_query": 15,
+    "queries_per_question": "1 original + 2\u20133 sub-queries = 3\u20134 total searches"
+  },
+  "reranker": {
+    "description": "BGE Cross-Encoder \u2014 scores all de-duplicated (query, child_chunk) pairs against the ORIGINAL user query only (not sub-queries). Top-n scoring child chunks trigger the Context Swap step.",
+    "model": "BAAI/bge-reranker-large",
+    "top_k_retrieve": 15,
+    "top_n_rerank": 4,
+    "rerank_against": "original user query only"
+  },
+  "context_swap": {
+    "description": "For each top-n child chunk, parent_id metadata is used to look up the full parent text from the in-memory parent_store dict. Duplicate parent IDs are skipped. The unique parent texts are joined as the final LLM context window."
+  },
+  "templates": {
+    "rag_qa_template": {
+      "description": "Main QA prompt \u2014 receives the swapped-in parent chunk context and the original user query (chat mode via ChatAnthropic).",
+      "template": "You are a helpful assistant. Use the following context to answer the question.\n\nContext:\n{context}\n\nQuestion: {question}\n\nAnswer concisely and accurately based only on the provided context.",
+      "input_variables": [
+        "context",
+        "question"
+      ],
+      "notes": "context = unique parent chunk texts joined with '\\n\\n---\\n\\n'. question = raw original user query string (not sub-queries)."
+    }
+  }
+}

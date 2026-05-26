@@ -1,0 +1,38 @@
+{
+  "description": "LangChain prompt templates used in the parent_child_rag pipeline.",
+  "source": "extracted from parent_child_rag_eval.py",
+  "chunker": {
+    "description": "Two-layer Parent-Child (Small-to-Large) chunking. Parent chunks capture full narrative sections and are stored in an in-memory dict. Child chunks are sub-segments embedded into the vector store with parent_id metadata.",
+    "parent_splitter": {
+      "type": "RecursiveCharacterTextSplitter",
+      "chunk_size": 1500,
+      "chunk_overlap": 200
+    },
+    "child_splitter": {
+      "type": "RecursiveCharacterTextSplitter",
+      "chunk_size": 200,
+      "chunk_overlap": 20
+    },
+    "index": "Only child chunks are embedded with OpenAIEmbeddings(model='text-embedding-3-small'). Each child chunk's metadata contains parent_id pointing back to its parent text."
+  },
+  "reranker": {
+    "description": "BGE Cross-Encoder \u2014 scores (query, child_chunk) pairs. Top-3 scoring child chunks trigger the Context Swap step.",
+    "model": "BAAI/bge-reranker-large",
+    "top_k_retrieve": 25,
+    "top_n_rerank": 3
+  },
+  "context_swap": {
+    "description": "For each top-n child chunk, parent_id metadata is used to look up the full parent text from the in-memory parent_store dict. Duplicate parent IDs are skipped. The unique parent texts are joined as the final LLM context window."
+  },
+  "templates": {
+    "rag_qa_template": {
+      "description": "Main QA prompt \u2014 receives the swapped-in parent chunk context and the user query (chat mode via ChatAnthropic).",
+      "template": "You are a helpful assistant. Use the following context to answer the question.\n\nContext:\n{context}\n\nQuestion: {question}\n\nAnswer concisely and accurately based only on the provided context.",
+      "input_variables": [
+        "context",
+        "question"
+      ],
+      "notes": "context = unique parent chunk texts joined with '\\n\\n---\\n\\n'. question = raw user query string."
+    }
+  }
+}
